@@ -14,7 +14,8 @@
 				image_width: 0,
 				image_height: 0,
 				mouse_wheel_multiplier: 20,
-				bind_resize: true
+				bind_resize: true,
+				is360:true //glue left and right and make it scrollable
 			};
 			if(options) $.extend(settings, options);
 			var viewport = $(this);
@@ -46,7 +47,7 @@
 				if (isDragged) return false;
 				scrollDelta = scrollDelta * 0.98;
 				if (Math.abs(scrollDelta)<=2) scrollDelta = 0;
-				scrollView(panoramaContainer, elem_width, scrollDelta);
+				scrollView(panoramaContainer, elem_width, scrollDelta,settings);
 			}, 1);
 			viewport.mousedown(function(e){
 				if (isDragged) return false;
@@ -64,13 +65,13 @@
 				if (!isDragged) return false;
 				scrollDelta = parseInt((e.clientX - mouseXprev));
 				mouseXprev = e.clientX;
-				scrollView(panoramaContainer, elem_width, scrollDelta);
+				scrollView(panoramaContainer, elem_width, scrollDelta,settings);
 				return false;
 			}).bind("mousewheel",function(e,distance){
 				var delta=Math.ceil(Math.sqrt(Math.abs(distance)));
 				delta=distance<0 ? -delta : delta;
 				scrollDelta = scrollDelta + delta * 5;
-				scrollView(panoramaContainer,elem_width,delta*settings.mouse_wheel_multiplier);
+				scrollView(panoramaContainer,elem_width,delta*settings.mouse_wheel_multiplier,settings);
 				return false;
 			}).bind('contextmenu',stopEvent).bind('touchstart', function(e){
 				if (isDragged) return false;
@@ -83,7 +84,7 @@
 				var touch_x = e.originalEvent.touches[0].pageX;
 				scrollDelta = parseInt((touch_x - mouseXprev));
 				mouseXprev = touch_x;
-				scrollView(panoramaContainer, elem_width, scrollDelta);
+				scrollView(panoramaContainer, elem_width, scrollDelta,settings);
 			}).bind('touchend', function(e){
 				isDragged = false;
 				scrollDelta = scrollDelta * 0.45;
@@ -119,16 +120,23 @@
 				});
 			}
 		});
-		
+
 		function stopEvent(e){
 			e.preventDefault();
 			return false;
 		}
 
-		function scrollView(panoramaContainer,elem_width,delta){
+		function scrollView(panoramaContainer,elem_width,delta,settings){
 			var newMarginLeft = parseInt(panoramaContainer.css('marginLeft'))+delta;
-			if (newMarginLeft > 0) newMarginLeft = -elem_width;
-			if (newMarginLeft < -elem_width) newMarginLeft = 0;
+			if(settings.is360){
+				if (newMarginLeft > 0) newMarginLeft = -elem_width;
+				if (newMarginLeft < -elem_width) newMarginLeft = 0;
+			}
+			else{
+				var right = (-elem_width>>2);
+				if (newMarginLeft > 0) newMarginLeft = 0;
+				if (newMarginLeft < right) newMarginLeft = right;
+			}
 			panoramaContainer.css('marginLeft', newMarginLeft+'px');
 		}
 
@@ -143,7 +151,7 @@
 							'left':		(area_coord[0]*percent)+"px",
 							'top':		(area_coord[1]*percent)+"px",
 							'width':	((area_coord[2]-area_coord[0])*percent)+"px",
-							'height':	((area_coord[3]-area_coord[1])*percent)+"px",
+							'height':	((area_coord[3]-area_coord[1])*percent)+"px"
 						});
 						break;
 					case 2:
@@ -151,7 +159,7 @@
 							'left':		(elem_width+parseInt(area_coord[0])*percent)+"px",
 							'top':		(area_coord[1]*percent)+"px",
 							'width':	((area_coord[2]-area_coord[0])*percent)+"px",
-							'height':	((area_coord[3]-area_coord[1])*percent)+"px",
+							'height':	((area_coord[3]-area_coord[1])*percent)+"px"
 						});
 						break;
 				}
